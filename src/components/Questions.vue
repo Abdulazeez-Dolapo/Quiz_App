@@ -1,27 +1,24 @@
 <template>
-	<div id="questions">
-		<p>{{ question }}</p>
+	<div class="questions-page">
+		<div id="container">
+			<div id="question">
+				<p :class="[color ? 'style' : 'timer']" id="timer" v-if="show">
+					{{ minute }}: {{ seconds }}
+				</p>
 
-		<ul v-for="(value, index) in options" :key="value">
-			<li> <input type="radio" :value="value" v-model="chosenAnswer" name="" id=""> {{ value }}: {{ index }}</li>
-		</ul>
+				<p>{{ question }}</p>
 
-		<button @click="nextQuestion" :disabled="disableNxt" v-if="show">Next</button><br>
-		<button @click="previousQuestion" :disabled="disablePrev" v-if="show">Previous</button><br>
-		<button @click="submit" v-if="show">Submit</button>
-		<button @click="start" v-else>Start Quiz</button>
-		<p>
-			{{ correctAnswersGot }}
-		</p>
-		{{ chosenAnswer }}
-		<p> {{ correctAnswer }} </p>
-		<p>
-			{{ answersChosen }}
-		</p>
-		<p>
-			{{counter}}
-		</p>
+				<ul v-for="value in options" :key="value">
+					<li> <input type="radio" :value="value" v-model="selectedAnswer" name="" id=""> {{ value }}</li>
+				</ul>
+			</div>
 
+			<button id="previous-btn" class="btn btn-primary" @click="previousQuestion" :disabled="disablePrev" v-if="show">PREVIOUS</button>
+			<button id="next-btn" class="btn btn-primary" @click="nextQuestion" :disabled="disableNxt" v-if="show">NEXT</button><br>
+			<button id="submit-btn" class="btn btn-primary" @click="submit" v-if="show">SUBMIT</button>
+			<button id="start-btn" class="btn btn-primary" @click="start" v-else>START QUIZ</button>
+		</div>
+	
 	</div>
 </template>
 
@@ -30,16 +27,18 @@ export default {
 	name: 'Questions',
 	data() {
 		return {
+			minute: 20,
+			seconds: 0,
 			show: false,
 			counter: -1,
 			question: null,
 			options: null,
-			chosenAnswer: null,
-			correctAnswersGot: 0,
-			answersChosen: [],
-			correctAnswersChosen: [],
+			selectedAnswer: null,
+			allSelectedAnswers: [],
 			disableNxt: false,
-			disablePrev: false
+			disablePrev: false,
+			allCorrectAnswers: [],
+			color: false,
 		}
 	},
 	created() {
@@ -52,48 +51,16 @@ export default {
 	computed: {
 		apiData() {
 			return this.$store.state.apiData
-		}
-	},
-	methods: {
-		start() {
-			this.counter++
-			this.show = true
 		},
-		nextQuestion() {
-			this.show = true
-			this.counter++
-			this.question = this.apiData[this.counter]["question"]
-			this.options = this.apiData[this.counter]["allOptions"]
-			
-			if(this.chosenAnswer === this.correctAnswer) {
-				this.correctAnswersGot++
-			}
-			this.correctAnswersChosen[this.counter] = this.correctAnswersGot
-			this.chosenAnswer = this.answersChosen[this.counter]
+		numberOfQuestions() {
+			return this.$store.state.numberOfQuestions
 		},
-		previousQuestion() {
-			this.counter--
-			this.question = this.apiData[this.counter]["question"]
-			this.options = this.apiData[this.counter]["allOptions"]
-			
-			this.chosenAnswer = this.answersChosen[this.counter]
-			this.correctAnswersGot = this.correctAnswersChosen[this.counter]
-			if (this.counter == 0) {
-				this.correctAnswersGot = 0
-			}
-		},
-		submit() {
-			if(this.chosenAnswer == this.correctAnswer) {
-				this.correctAnswersGot++
-			}
-			alert(`${this.correctAnswersGot}`)
-		}
 	},
 	watch: {
-		chosenAnswer: function() {
+		selectedAnswer: function() {
 			this.correctAnswer = this.apiData[this.counter]["correctAnswer"]
 
-			this.answersChosen[this.counter] = this.chosenAnswer
+			this.allSelectedAnswers[this.counter] = this.selectedAnswer
 		},
 		counter: function() {
 			if (this.counter <= 0 ) {
@@ -101,18 +68,134 @@ export default {
 			} else {
 				this.disablePrev = false
 			} 
-			if (this.counter == this.$store.state.numberOfQuestions - 1 ) {
+			if (this.counter == this.numberOfQuestions - 1 ) {
 				this.disableNxt = true
 			} else {
 				this.disableNxt = false
 			}
 		},
-	}
+		minute: function() {
+			if (this.minute === 4) {
+				this.color = true
+			}
+		}
+	},
+	methods: {
+		start() {
+			const interval = setInterval(()=> {
+				this.seconds--
+				if(this.seconds === -1) {
+					this.minute--
+					this.seconds = 59
+				}
+				if (this.minute === 0 && this.seconds === 0) {
+					this.submit()
+					clearInterval(interval)
+				}
+			}, 1000)
+
+			this.show = true
+			this.nextQuestion()
+			this.apiData.forEach( item => {
+			this.allCorrectAnswers.push(item["correctAnswer"])			
+
+		})
+		},
+		nextQuestion() {
+			this.counter++
+			this.question = this.apiData[this.counter]["question"]
+			this.options = this.apiData[this.counter]["allOptions"]
+			this.selectedAnswer = this.allSelectedAnswers[this.counter]
+		},
+		previousQuestion() {
+			this.counter--
+			this.question = this.apiData[this.counter]["question"]
+			this.options = this.apiData[this.counter]["allOptions"]
+			this.selectedAnswer = this.allSelectedAnswers[this.counter]
+		},
+		submit() {
+			const correct = []
+			const wrong = []
+			for(let i = 0; i < this.numberOfQuestions; i++) {
+				if(!this.allSelectedAnswers.length) {
+					correct.length = 0
+				} else {
+					if(this.allSelectedAnswers[i] == this.allCorrectAnswers[i]) {
+						correct.push(true)
+					} else {
+						wrong.push(false)
+					}
+				}
+			}
+
+			function length(array) {
+				let number = 0
+				array.forEach(item => {
+					if(item != null) {
+						number++
+					}
+				})
+				return number
+			}
+
+			this.$store.state.result = correct.length
+			this.$store.state.numberOfQuestionsAnswered = length(this.allSelectedAnswers)
+			this.$router.push('/Result')
+		}
+	},
+	
 }
+
 </script>
 
-<style>
+<style scoped>
+	.questions-page {
+		margin: 0;
+		padding: 0;
+		box-sizing: border-box;
+	
+	}
+
+	#container {
+		text-align: center;
+		margin-top: 90px;
+		margin-left: 140px;
+		background-color: whitesmoke;
+		box-shadow: 1px 2px 1.5vmin grey;
+		width: 1000px;
+		font-size: 20px;
+		padding: 3px 20px;
+	}
+
+	#previous-btn {
+		margin-right: 500px
+	}
+
+	#submit-btn {
+		margin-bottom: 10px;
+	}
+
+	#start-btn {
+		margin-bottom: 40px;
+		height: 50px;
+	}
+
 	li {
 		list-style-type: none;
+	}
+
+	#timer {
+		margin-top: 15px;
+		margin-left: 800px;
+		font-size: 25px;
+	}
+
+	.style {
+		color: red;
+		font-size: 50px;
+	}
+
+	.timer {
+		color: black
 	}
 </style>

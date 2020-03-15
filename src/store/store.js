@@ -6,6 +6,9 @@ export const store = new Vuex.Store({
 	state: {
 		apiData: [],
 		numberOfQuestions: null,
-		correctAnswersGot: null
+		category: null,
+		difficulty: null,
+		result: null,
+		numberOfQuestionsAnswered: null,	
 	}
 })
