@@ -82,6 +82,8 @@ export default {
 	},
 	methods: {
 		start() {
+
+			// Start the countdown timer
 			const interval = setInterval(()=> {
 				this.seconds--
 				if(this.seconds === -1) {
@@ -114,6 +116,8 @@ export default {
 			this.selectedAnswer = this.allSelectedAnswers[this.counter]
 		},
 		submit() {
+
+			// Check if the chosen answers are correct
 			const correct = []
 			const wrong = []
 			for(let i = 0; i < this.numberOfQuestions; i++) {

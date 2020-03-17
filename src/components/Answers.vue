@@ -7,7 +7,7 @@
                     <p><span id="ans">ANSWER:</span> {{ value.correctAnswer }}</p>
                 </li>
             </ul>
-            <button class="btn btn-primary" @click="start">TAKE ANOTHER QUIZ</button>
+            <button class="btn btn-primary" @click="restart">TAKE ANOTHER QUIZ</button>
         </div>
     </div>
 </template>
@@ -21,7 +21,9 @@ export default {
         }
     },
     methods: {
-        start() {
+
+        // Restart Quiz and reset all values to the initial state
+        restart() {
             this.$store.state.apiData = []
             this.$store.state.numberOfQuestions = null
             this.$store.state.category = null

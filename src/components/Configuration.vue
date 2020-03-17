@@ -70,6 +70,8 @@ export default {
 			this.difficulty = event.target.value
 		},
 		selectCategory(event) {
+
+			// Get the corresponding name for the category chosen
 			const categories = [
 				[ 9,"General Knowledge"],
 				[ 10, "Entertainment: Books"],
@@ -109,6 +111,8 @@ export default {
 			this.categoryName = categoryName
 		},
 		confirm() {
+
+			// Validate the inputs in the fields
 			if (!this.difficulty || !this.numberOfQuestions || !this.category) {
 				this.errorMessage = "Please select at least one value from each field"
 			} else {
@@ -122,11 +126,14 @@ export default {
 					this.errorMessage = 'Sorry! You cannot take more than 45 questions in this difficulty mode'
 					return
 				} else {
+
+					// Send data to the store 
 					this.url = `https://opentdb.com/api.php?amount=${this.numberOfQuestions}&category=${this.category}&difficulty=${this.difficulty}&type=multiple`
 					this.$store.state.numberOfQuestions = this.numberOfQuestions
 					this.$store.state.category = this.categoryName
-					this.$store.state.difficulty = this.difficulty				
+					this.$store.state.difficulty = this.difficulty		
 
+					// Get data from the API and format it
 					Axios.get(this.url)
 						.then(res => {
 							let data = res["data"]["results"]
@@ -146,11 +153,11 @@ export default {
 									allOptions: options
 								})
 							})
+							this.$router.push('/Questions')
 
 						})
 						.catch(err => { console.error(err) })
 					
-					this.$router.push('/Questions')
 				}
 			}
 		}
